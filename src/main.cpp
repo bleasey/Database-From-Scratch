@@ -4,6 +4,6 @@ int main() {
   DB db;
 
   while(true) {
-    db.run();
+    db.run_once();
   }
 }
