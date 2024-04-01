@@ -1,4 +1,4 @@
-#include "../include/db.h"
+#include "include/db.h"
 
 int main() {
   DB db;
