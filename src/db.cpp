@@ -27,6 +27,9 @@ void DB::run_once() {
   switch (prepare_statement()) {
     case (PREPARE_SUCCESS):
       break;
+    case (PREPARE_STRING_TOO_LONG):
+      std::cout << "Error. Input string too long.\n";
+      return;
     case (PREPARE_SYNTAX_ERROR):
       std::cout << "Syntax error. Could not parse statement.\n"; 
       return;

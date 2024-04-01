@@ -29,6 +29,7 @@ typedef enum {
 typedef enum {
   PREPARE_SUCCESS,
   PREPARE_SYNTAX_ERROR,
+  PREPARE_STRING_TOO_LONG,
   PREPARE_UNRECOGNIZED_STATEMENT
 } PrepareResult;
 
@@ -39,8 +40,8 @@ typedef enum {
 
 typedef struct {
   uint32_t id;
-  char username[COLUMN_USERNAME_SIZE] = {'\0'};
-  char email[COLUMN_EMAIL_SIZE] = {'\0'};
+  char username[COLUMN_USERNAME_SIZE + 1] = {'\0'};
+  char email[COLUMN_EMAIL_SIZE + 1] = {'\0'};
 } Row;
 
 typedef struct Table{
@@ -68,6 +69,7 @@ public:
   MetaCommandResult do_meta_command();
 
 public:
+  PrepareResult prepare_insert();
   PrepareResult prepare_statement();
   ExecuteResult execute_insert();
   ExecuteResult execute_select();

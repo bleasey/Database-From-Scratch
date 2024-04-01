@@ -1,20 +1,44 @@
 #include <iostream>
+#include <string.h>
 #include "../include/db.h"
+
+PrepareResult DB::prepare_insert() {
+  statement->type = STATEMENT_INSERT;
+
+  char* tmp_buffer = strdup(input_buffer->buffer.c_str());
+
+  // Parse: "Insert {id} {username} {email}"
+  char* keyword = strtok(tmp_buffer, " ");
+  char* id_string = strtok(NULL, " ");
+  char* username = strtok(NULL, " ");
+  char* email = strtok(NULL, " ");
+  char* remaining_buffer = strtok(NULL, " ");
+
+  // Parsing error if incorrect no. of elements present
+  if (email == NULL || remaining_buffer != NULL) {
+    return PREPARE_SYNTAX_ERROR;
+  }
+
+  int id = atoi(id_string);
+  if (strlen(username) > COLUMN_USERNAME_SIZE) {
+    return PREPARE_STRING_TOO_LONG;
+  }
+  if (strlen(email) > COLUMN_EMAIL_SIZE) {
+    return PREPARE_STRING_TOO_LONG;
+  }
+
+  statement->row_to_insert.id = id;
+  strcpy(statement->row_to_insert.username, username);
+  strcpy(statement->row_to_insert.email, email);
+
+  free(tmp_buffer);
+
+  return PREPARE_SUCCESS;
+}
 
 PrepareResult DB::prepare_statement() {
   if (input_buffer->buffer.substr(0, 6) == "insert") {
-    statement->type = STATEMENT_INSERT;
-
-    // Need to fix input overflow bug
-    int args_assigned = sscanf(
-      (input_buffer->buffer).c_str(), "insert %d %s %s", &(statement->row_to_insert.id),
-      statement->row_to_insert.username, statement->row_to_insert.email);
-    
-    if (args_assigned < 3) {
-      return PREPARE_SYNTAX_ERROR;
-    }
-
-    return PREPARE_SUCCESS;
+    return prepare_insert();
   }
   if (input_buffer->buffer.substr(0, 6) == "select") {
     statement->type = STATEMENT_SELECT;
