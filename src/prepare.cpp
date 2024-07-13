@@ -4,8 +4,6 @@
 #include "../include/table.h"
 
 PrepareResult DB::prepare_insert() {
-  statement_type = STATEMENT_INSERT;
-
   char* tmp_buffer = strdup(input_buffer->buffer.c_str());
 
   // Parse: "Insert {id} {username} {email}"
@@ -41,6 +39,7 @@ PrepareResult DB::prepare_insert() {
 
 PrepareResult DB::prepare_statement() {
   if (input_buffer->buffer.substr(0, 6) == "insert") {
+    statement_type = STATEMENT_INSERT;
     return prepare_insert();
   }
   if (input_buffer->buffer.substr(0, 6) == "select") {

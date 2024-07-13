@@ -2,6 +2,7 @@
 #include <cerrno>
 #include <unistd.h>
 #include <iostream>
+#include <cmath>
 #include "../include/db.h"
 #include "../include/table.h"
 
@@ -49,8 +50,8 @@ Pager::~Pager() {
 
 
 void* Pager::get_page(uint32_t page_num) {
-  uint32_t num_pages = this->file_length / Table::PAGE_SIZE;
-  uint32_t page_offset = this->file_length % Table::PAGE_SIZE;
+  uint32_t num_pages = ceil((float)this->num_rows / Table::ROWS_PER_PAGE);
+  uint32_t page_offset = (this->num_rows % Table::ROWS_PER_PAGE) * Table::ROW_SIZE;
 
   // Adding a page when previous is full
   if (page_num == num_pages && page_offset == 0) {
@@ -61,8 +62,8 @@ void* Pager::get_page(uint32_t page_num) {
   // Else one of the existing pages is requested
 
   if (page_num >= num_pages) {
-    std::cout << "Invalid call made to page: " << page_num 
-    << "; pages present: " << num_pages << " with offset: "
+    std::cout << "Invalid call made to page - " << page_num 
+    << "; pages present - " << num_pages << " with offset - "
     << page_offset << std::endl;
     exit(EXIT_FAILURE);
   }

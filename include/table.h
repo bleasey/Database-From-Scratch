@@ -4,7 +4,7 @@
 #include <string>
 
 #define size_of_attribute(Struct, Attribute) sizeof(((Struct*)0)->Attribute)
-#define COLUMN_USERNAME_SIZE 32
+#define COLUMN_USERNAME_SIZE 31
 #define COLUMN_EMAIL_SIZE 255
 #define TABLE_MAX_PAGES 100
 
@@ -12,6 +12,7 @@
 typedef struct Pager{
   int file_descriptor;
   uint32_t file_length;
+  uint32_t num_rows;
   void* pages[TABLE_MAX_PAGES];
   Pager(const char* filename);
   ~Pager();
@@ -52,10 +53,7 @@ public:
   static const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
 
 public:
-  uint32_t num_rows;
   Pager* pager;
-
-public:
   Row* row_to_insert;
 
 };
