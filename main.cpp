@@ -1,4 +1,5 @@
 #include "include/db.h"
+#include "include/table.h"
 
 int main() {
   DB db;

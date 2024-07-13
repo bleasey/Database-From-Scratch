@@ -3,10 +3,7 @@
 
 #include <string>
 
-#define size_of_attribute(Struct, Attribute) sizeof(((Struct*)0)->Attribute)
-#define COLUMN_USERNAME_SIZE 32
-#define COLUMN_EMAIL_SIZE 255
-#define TABLE_MAX_PAGES 100
+class Table;
 
 typedef enum {
   EXECUTE_SUCCESS,
@@ -34,36 +31,8 @@ typedef enum {
 typedef struct InputBuffer{
   std::string buffer;
   ssize_t input_length;
-  InputBuffer() {this->input_length = 0;}
+  InputBuffer() {input_length = 0;}
 } InputBuffer;
-
-typedef struct Pager{
-  int file_descriptor;
-  uint32_t file_length;
-  void* pages[TABLE_MAX_PAGES];
-  Pager(const char* filename);
-  ~Pager();
-  void* get_page(uint32_t page_num);
-  void flush_to_disk(uint32_t page_num, uint32_t size);
-} Pager;
-
-typedef struct {
-  uint32_t id;
-  char username[COLUMN_USERNAME_SIZE + 1] = {'\0'};
-  char email[COLUMN_EMAIL_SIZE + 1] = {'\0'};
-} Row;
-
-typedef struct Table{
-  uint32_t num_rows;
-  Pager* pager;
-  Table();
-  ~Table();
-} Table;
-
-typedef struct {
-  StatementType type;
-  Row row_to_insert;  // only used by insert statement
-} Statement;
 
 
 class DB {
@@ -73,39 +42,22 @@ public:
 
 public:
   void print_prompt();
-  void print_row(Row* row);
   void read_input();
   MetaCommandResult do_meta_command();
 
 public:
   PrepareResult prepare_insert();
   PrepareResult prepare_statement();
+  
+public:
   ExecuteResult execute_insert();
   ExecuteResult execute_select();
   ExecuteResult execute_statement();
 
 public:
-  void serialize_row(Row* source, void* destination);
-  void deserialize_row(void* source, Row* destination);
-  void* get_row(Table* table, uint32_t row_num);
-
-public:
-  static const uint32_t ID_SIZE = size_of_attribute(Row, id);
-  static const uint32_t USERNAME_SIZE = size_of_attribute(Row, username);
-  static const uint32_t EMAIL_SIZE = size_of_attribute(Row, email);
-  static const uint32_t ID_OFFSET = 0;
-  static const uint32_t USERNAME_OFFSET = ID_OFFSET + ID_SIZE;
-  static const uint32_t EMAIL_OFFSET = USERNAME_OFFSET + USERNAME_SIZE;
-  static const uint32_t ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE;
-
-  static const uint32_t PAGE_SIZE = 4096;
-  static const uint32_t ROWS_PER_PAGE = PAGE_SIZE / ROW_SIZE;
-  static const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
-
-private:
   bool is_input_empty;
   InputBuffer* input_buffer;
-  Statement* statement;
+  StatementType statement_type;
   Table* table;
 
 };

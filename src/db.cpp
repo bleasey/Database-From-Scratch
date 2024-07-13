@@ -1,9 +1,9 @@
 #include <iostream>
 #include "../include/db.h"
+#include "../include/table.h"
 
 DB::DB() {
   input_buffer = new InputBuffer();
-  statement = new Statement();
   table = new Table();
 }
 

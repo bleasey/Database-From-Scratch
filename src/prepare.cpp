@@ -1,9 +1,10 @@
 #include <iostream>
 #include <string.h>
 #include "../include/db.h"
+#include "../include/table.h"
 
 PrepareResult DB::prepare_insert() {
-  statement->type = STATEMENT_INSERT;
+  statement_type = STATEMENT_INSERT;
 
   char* tmp_buffer = strdup(input_buffer->buffer.c_str());
 
@@ -30,9 +31,9 @@ PrepareResult DB::prepare_insert() {
     return PREPARE_STRING_TOO_LONG;
   }
 
-  statement->row_to_insert.id = id;
-  strcpy(statement->row_to_insert.username, username);
-  strcpy(statement->row_to_insert.email, email);
+  table->row_to_insert->id = id;
+  strcpy(table->row_to_insert->username, username);
+  strcpy(table->row_to_insert->email, email);
   free(tmp_buffer);
 
   return PREPARE_SUCCESS;
@@ -43,38 +44,8 @@ PrepareResult DB::prepare_statement() {
     return prepare_insert();
   }
   if (input_buffer->buffer.substr(0, 6) == "select") {
-    statement->type = STATEMENT_SELECT;
+    statement_type = STATEMENT_SELECT;
     return PREPARE_SUCCESS;
   }
   return PREPARE_UNRECOGNIZED_STATEMENT;
-}
-
-ExecuteResult DB::execute_insert() {
-  if (table->num_rows >= TABLE_MAX_ROWS) {
-    return EXECUTE_TABLE_FULL;
-  }
-
-  serialize_row(&(statement->row_to_insert), get_row(table, table->num_rows));
-  table->num_rows += 1;
-  return EXECUTE_SUCCESS;
-}
-
-ExecuteResult DB::execute_select() {
-  Row row;
-  for (uint32_t i = 0; i < table->num_rows; i++) {
-    deserialize_row(get_row(table, i), &row);
-    print_row(&row);
-  }
-  return EXECUTE_SUCCESS;
-}
-
-ExecuteResult DB::execute_statement() {
-  switch (statement->type) {
-    case (STATEMENT_INSERT):
-      return execute_insert();
-    case (STATEMENT_SELECT):
-      return execute_select();
-    default:
-      return EXECUTE_ERROR; // to escape "control reaches end of non-void func" warning
-  }
 }
