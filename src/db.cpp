@@ -46,5 +46,8 @@ void DB::run_once() {
     case (EXECUTE_TABLE_FULL):
       std::cout << "Error: Table full.\n";
       break;
+    case (EXECUTE_ERROR):
+      std::cout << "Error occured during statement execution.\n";
+      break;
   }
 }

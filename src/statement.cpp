@@ -16,21 +16,23 @@ PrepareResult DB::prepare_insert() {
 
   // Parsing error if incorrect no. of elements present
   if (email == NULL || remaining_buffer != NULL) {
+    free(tmp_buffer);
     return PREPARE_SYNTAX_ERROR;
   }
 
   int id = atoi(id_string);
   if (strlen(username) > COLUMN_USERNAME_SIZE) {
+    free(tmp_buffer);
     return PREPARE_STRING_TOO_LONG;
   }
   if (strlen(email) > COLUMN_EMAIL_SIZE) {
+    free(tmp_buffer);
     return PREPARE_STRING_TOO_LONG;
   }
 
   statement->row_to_insert.id = id;
   strcpy(statement->row_to_insert.username, username);
   strcpy(statement->row_to_insert.email, email);
-
   free(tmp_buffer);
 
   return PREPARE_SUCCESS;

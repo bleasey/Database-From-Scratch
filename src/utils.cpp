@@ -19,6 +19,7 @@ void DB::read_input() {
 MetaCommandResult DB::do_meta_command() {
   if (input_buffer->buffer == ".exit") {
     delete input_buffer;
+    delete table; // saves to disk, frees allocated memory
     exit(EXIT_SUCCESS);
   }
   else {
