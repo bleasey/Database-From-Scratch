@@ -8,17 +8,25 @@ ExecuteResult DB::execute_insert() {
     return EXECUTE_TABLE_FULL;
   }
 
-  table->serialize_row(table->row_to_insert, table->get_row(table->pager->num_rows));
+  Cursor* cursor = new Cursor(table, -1);
+  table->serialize_row(table->row_to_insert, table->get_row(cursor));
   table->pager->num_rows += 1;
+
+  delete cursor;
   return EXECUTE_SUCCESS;
 }
 
 ExecuteResult DB::execute_select() {
+  Cursor* cursor = new Cursor(table, 0);
   Row row;
-  for (uint32_t i = 0; i < table->pager->num_rows; i++) {
-    table->deserialize_row(table->get_row(i), &row);
+
+  while (!(cursor->end_of_table)){
+    table->deserialize_row(table->get_row(cursor), &row);
     table->print_row(&row);
+    cursor->advance();
   }
+
+  delete cursor;
   return EXECUTE_SUCCESS;
 }
 

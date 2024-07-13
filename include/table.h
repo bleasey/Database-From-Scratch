@@ -26,6 +26,14 @@ typedef struct {
   char email[COLUMN_EMAIL_SIZE + 1] = {'\0'};
 } Row;
 
+typedef struct Cursor {
+  Table* table;
+  uint32_t row_num;
+  bool end_of_table;  // Indicates a position one past the last element
+  Cursor(Table* table, uint32_t row_num); // Initializes with given position
+  void advance();
+} Cursor;
+
 class Table {
 public:
   Table();
@@ -34,7 +42,7 @@ public:
 public:
   void serialize_row(Row* source, void* destination);
   void deserialize_row(void* source, Row* destination);
-  void* get_row(uint32_t row_num);
+  void* get_row(Cursor* cursor);
   
 public:
   void print_row(Row* row);
