@@ -44,6 +44,7 @@ public:
   void print_prompt();
   void read_input();
   MetaCommandResult do_meta_command();
+  void print_info();
 
 public:
   PrepareResult prepare_insert();
