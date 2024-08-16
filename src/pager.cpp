@@ -3,8 +3,10 @@
 #include <unistd.h>
 #include <iostream>
 #include <cmath>
+#include <assert.h>
 #include "../include/db.h"
 #include "../include/table.h"
+#include "../include/btree.h"
 
 Pager::Pager(const char* filename) {
   for (uint32_t i = 0; i < TABLE_MAX_PAGES; i++) {
@@ -27,6 +29,13 @@ Pager::Pager(const char* filename) {
 
   this->file_descriptor = fd;
   this->file_length = flength;
+  this->num_pages = this->file_length / Table::PAGE_SIZE;
+
+  // File length assertion
+  if (file_length % Table::PAGE_SIZE != 0) {
+    std::cout << "Corrupt file. mydb file is not a whole number of pages.\n";
+    exit(EXIT_FAILURE);
+  }
 }
 
 Pager::~Pager() {
@@ -50,22 +59,15 @@ Pager::~Pager() {
 
 
 void* Pager::get_page(uint32_t page_num) {
-  uint32_t num_pages = ceil((float)this->num_rows / Table::ROWS_PER_PAGE);
-  uint32_t page_offset = (this->num_rows % Table::ROWS_PER_PAGE) * Table::ROW_SIZE;
+  // Checking if page requested is within limits
+  assert (page_num <= this->num_pages);
 
   // Adding a page when previous is full
-  if (page_num == num_pages && page_offset == 0) {
-    this->pages[page_num] = malloc(Table::PAGE_SIZE);
-    return this->pages[page_num]; 
-  }
-
   // Else one of the existing pages is requested
-
-  if (page_num >= num_pages) {
-    std::cout << "Invalid call made to page - " << page_num 
-    << "; pages present - " << num_pages << " with offset - "
-    << page_offset << std::endl;
-    exit(EXIT_FAILURE);
+  if (page_num == this->num_pages) {
+    this->pages[page_num] = malloc(Table::PAGE_SIZE);
+    this->num_pages += 1;
+    return this->pages[page_num]; 
   }
 
   // Fetching page from file if not in cache
@@ -86,22 +88,23 @@ void* Pager::get_page(uint32_t page_num) {
 }
 
 
-void Pager::flush_to_disk(uint32_t page_num, uint32_t size) {
+void Pager::flush_to_disk(uint32_t page_num) {
   if (this->pages[page_num] == NULL) {
     std::cout << "Tried to flush null page having index " << page_num
     << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  off_t offset = lseek(this->file_descriptor, page_num * Table::PAGE_SIZE, SEEK_SET);
+  uint32_t num_cells = *(btree->leaf_num_cells(this->pages[page_num]));
+  if (num_cells == 0) return;
 
+  off_t offset = lseek(this->file_descriptor, page_num * Table::PAGE_SIZE, SEEK_SET);
   if (offset == -1) {
     std::cout << "Error seeking: " << errno << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  ssize_t bytes_written = write(this->file_descriptor, this->pages[page_num], size);
-
+  ssize_t bytes_written = write(this->file_descriptor, this->pages[page_num], Table::PAGE_SIZE);
   if (bytes_written == -1) {
     std::cout << "Error writing: " << errno << std::endl;
     exit(EXIT_FAILURE);

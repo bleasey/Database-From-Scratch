@@ -2,15 +2,17 @@
 #include <string.h>
 #include "../include/db.h"
 #include "../include/table.h"
+#include "../include/btree.h"
 
 ExecuteResult DB::execute_insert() {
-  if (table->pager->num_rows >= Table::TABLE_MAX_ROWS) {
+  void* node = table->pager->get_page(table->pager->root_page_num);
+  BTree* btree = table->pager->btree;
+  if (*(btree->leaf_num_cells(node)) >= btree->LEAF_NODE_MAX_CELLS) {
     return EXECUTE_TABLE_FULL;
   }
 
-  Cursor* cursor = new Cursor(table, -1);
-  table->serialize_row(table->row_to_insert, table->get_row(cursor));
-  table->pager->num_rows += 1;
+  Cursor* cursor = new Cursor(table, true); // cursor initialized at table end
+  btree->leaf_node_insert(cursor, table->row_to_insert->id, table->row_to_insert);
 
   delete cursor;
   return EXECUTE_SUCCESS;
@@ -21,7 +23,7 @@ ExecuteResult DB::execute_select() {
   Row row;
 
   while (!(cursor->end_of_table)){
-    table->deserialize_row(table->get_row(cursor), &row);
+    table->deserialize_row(cursor->get_value(), &row);
     table->print_row(&row);
     cursor->advance();
   }

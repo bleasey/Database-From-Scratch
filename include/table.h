@@ -9,15 +9,19 @@
 #define TABLE_MAX_PAGES 100
 
 
+class BTree;
+
 typedef struct Pager{
   int file_descriptor;
   uint32_t file_length;
-  uint32_t num_rows;
+  uint32_t num_pages;
+  uint32_t root_page_num;
   void* pages[TABLE_MAX_PAGES];
+  BTree* btree;
   Pager(const char* filename);
   ~Pager();
   void* get_page(uint32_t page_num);
-  void flush_to_disk(uint32_t page_num, uint32_t size);
+  void flush_to_disk(uint32_t page_num);
 } Pager;
 
 typedef struct {
@@ -28,9 +32,11 @@ typedef struct {
 
 typedef struct Cursor {
   Table* table;
-  uint32_t row_num;
+  uint32_t page_num;
+  uint32_t cell_num;
   bool end_of_table;  // Indicates a position one past the last element
-  Cursor(Table* table, uint32_t row_num); // Initializes with given position
+  Cursor(Table* table, bool at_table_end); // Initializes with given position
+  void* get_value();
   void advance();
 } Cursor;
 
@@ -42,10 +48,11 @@ public:
 public:
   void serialize_row(Row* source, void* destination);
   void deserialize_row(void* source, Row* destination);
-  void* get_row(Cursor* cursor);
   
 public:
   void print_row(Row* row);
+  void print_leaf(void* node);
+  void print_btree();
 
 public:
   static const uint32_t ID_SIZE = size_of_attribute(Row, id);
@@ -57,8 +64,6 @@ public:
   static const uint32_t ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE;
 
   static const uint32_t PAGE_SIZE = 4096;
-  static const uint32_t ROWS_PER_PAGE = PAGE_SIZE / ROW_SIZE;
-  static const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
 
 public:
   Pager* pager;

@@ -2,34 +2,31 @@
 #include <string.h>
 #include "../include/db.h"
 #include "../include/table.h"
+#include "../include/btree.h"
 
 Table::Table() {  
   this->pager = new Pager("table.mydb");
-  this->pager->num_rows = pager->file_length / Table::ROW_SIZE;
   this->row_to_insert = new Row();
+
+  this->pager->root_page_num = 0;
+
+  if (pager->num_pages == 0) {
+    // New database file. Initialize page 0 as leaf node.
+    void* root_node = this->pager->get_page(0);
+    this->pager->btree->initialize_leaf_node(root_node);
+  }
 }
 
 Table::~Table() {
   Pager* pager = this->pager;
-  uint32_t num_full_pages = this->pager->num_rows / Table::ROWS_PER_PAGE;
 
   // Writing pages to disk
-  for (uint32_t i = 0; i < num_full_pages; i++) {
+  for (uint32_t i = 0; i < this->pager->num_pages; i++) {
     if (pager->pages[i] == NULL) {
       // This page wasnt fetched, hence not updated
       continue;
     }
-    pager->flush_to_disk(i, Table::PAGE_SIZE);
-  }
-
-  // There may be a partial page to write to the end of the file
-  // This should not be needed after we switch to a B-tree
-  uint32_t num_additional_rows = this->pager->num_rows % Table::ROWS_PER_PAGE;
-  if (num_additional_rows > 0) {
-    uint32_t page_num = num_full_pages;
-    if (pager->pages[page_num] != NULL) {
-      pager->flush_to_disk(page_num, num_additional_rows * Table::ROW_SIZE);
-    }
+    pager->flush_to_disk(i);
   }
 
   delete this->pager; // closes file and frees page memory
@@ -48,12 +45,4 @@ void Table::deserialize_row(void* source, Row* destination) {
   memcpy(&(destination->id), (uint8_t*)source + ID_OFFSET, ID_SIZE);
   memcpy(&(destination->username), (uint8_t*)source + USERNAME_OFFSET, USERNAME_SIZE);
   memcpy(&(destination->email), (uint8_t*)source + EMAIL_OFFSET, EMAIL_SIZE);
-}
-
-void* Table::get_row(Cursor* cursor) {
-  uint32_t page_num = cursor->row_num / ROWS_PER_PAGE;
-  void* page = this->pager->get_page(page_num);
-  uint32_t row_offset = cursor->row_num % ROWS_PER_PAGE;
-  uint32_t byte_offset = row_offset * ROW_SIZE;
-  return (uint8_t*)page + byte_offset;
 }
