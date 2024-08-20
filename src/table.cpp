@@ -46,3 +46,19 @@ void Table::deserialize_row(void* source, Row* destination) {
   memcpy(&(destination->username), (uint8_t*)source + USERNAME_OFFSET, USERNAME_SIZE);
   memcpy(&(destination->email), (uint8_t*)source + EMAIL_OFFSET, EMAIL_SIZE);
 }
+
+
+// Return the position of the given key.
+// If the key is not present, return the position
+// where it should be inserted
+Cursor* Table::find_key(uint32_t key) {
+  void* root_node = pager->get_page(pager->root_page_num);
+
+  if (pager->btree->get_node_type(root_node) == NODE_LEAF) {
+    return pager->btree->leaf_node_find(pager->root_page_num, key, this);
+  }
+  else {
+    std::cout << "Need to implement searching an internal node\n";
+    exit(EXIT_FAILURE);
+  }
+}

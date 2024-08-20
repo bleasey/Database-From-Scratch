@@ -66,6 +66,7 @@ void* Pager::get_page(uint32_t page_num) {
   // Else one of the existing pages is requested
   if (page_num == this->num_pages) {
     this->pages[page_num] = malloc(Table::PAGE_SIZE);
+    this->btree->initialize_leaf_node(this->pages[page_num]);
     this->num_pages += 1;
     return this->pages[page_num]; 
   }

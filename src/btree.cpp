@@ -22,10 +22,52 @@ void* BTree::leaf_value(void* node, uint32_t cell_num) {
   return (uint8_t*)leaf_cell(node, cell_num) + LEAF_NODE_KEY_SIZE;
 }
 
+NodeType BTree::get_node_type(void* node) {
+  uint8_t type = *((uint8_t*)node + NODE_TYPE_OFFSET);
+  return (NodeType)type;
+}
+
+void BTree::set_node_type(void* node, NodeType type) {
+  *((uint8_t*)node + NODE_TYPE_OFFSET) = (uint8_t)type;
+}
+
 void BTree::initialize_leaf_node(void* node) {
+  set_node_type(node, NODE_LEAF);
   *leaf_num_cells(node) = 0;
 }
 
+
+/*
+The following function will return either:
+-- the position of the key,
+-- the position of another key that we’ll need to move if we want to insert the new key, or
+-- the position one past the last key
+*/
+Cursor* BTree::leaf_node_find(uint32_t page_num, uint32_t key, Table* table) {
+  Pager* pager = table->pager;
+  void* node = pager->get_page(page_num);
+  uint32_t num_cells = *leaf_num_cells(node);
+
+  Cursor* cursor = new Cursor(table);
+  cursor->page_num = page_num;
+
+  // Binary search to assign cell_num
+  uint32_t min_index = 0;
+  uint32_t one_past_max_index = num_cells;
+  while (one_past_max_index != min_index) {
+    uint32_t index = (min_index + one_past_max_index) / 2;
+    uint32_t key_at_index = *leaf_key(node, index);
+    if (key == key_at_index) {
+      cursor->cell_num = index;
+      return cursor;
+    }
+    else if (key < key_at_index) one_past_max_index = index;
+    else min_index = index + 1;
+  }
+
+  cursor->cell_num = min_index;
+  return cursor;
+} 
 
 void BTree::leaf_node_insert(Cursor* cursor, uint32_t key, Row* value) {
   Pager* pager = cursor->table->pager;

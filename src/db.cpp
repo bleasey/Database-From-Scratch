@@ -46,6 +46,9 @@ void DB::run_once() {
     case (EXECUTE_TABLE_FULL):
       std::cout << "Error: Table full.\n";
       break;
+    case (EXECUTE_DUPLICATE_KEY):
+      std::cout << "Error: Duplicate key not allowed.\n";
+      break;
     case (EXECUTE_ERROR):
       std::cout << "Error occured during statement execution.\n";
       break;

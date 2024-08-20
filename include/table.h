@@ -8,7 +8,6 @@
 #define COLUMN_EMAIL_SIZE 255
 #define TABLE_MAX_PAGES 100
 
-
 class BTree;
 
 typedef struct Pager{
@@ -35,7 +34,8 @@ typedef struct Cursor {
   uint32_t page_num;
   uint32_t cell_num;
   bool end_of_table;  // Indicates a position one past the last element
-  Cursor(Table* table, bool at_table_end); // Initializes with given position
+  Cursor(Table* table);
+  Cursor(Table* table, uint32_t key); // Initializes with given position
   void* get_value();
   void advance();
 } Cursor;
@@ -44,6 +44,9 @@ class Table {
 public:
   Table();
   ~Table();
+
+public:
+  Cursor* find_key(uint32_t key);
 
 public:
   void serialize_row(Row* source, void* destination);

@@ -1,24 +1,31 @@
+#include <iostream>
 #include <string.h>
 #include "../include/db.h"
 #include "../include/table.h"
 #include "../include/btree.h"
 
-Cursor::Cursor(Table* table, bool at_table_end) {  
-  // Creates a cursor object at table end
+// Creates a cursor object at the table start
+Cursor::Cursor(Table* table) {
   this->table = table;
   this->page_num = table->pager->root_page_num;
+  this->cell_num = 0;
 
-  void* root_node = table->pager->get_page(table->pager->root_page_num);
+  void* root_node = table->pager->get_page(this->page_num);
   uint32_t num_cells = *(table->pager->btree->leaf_num_cells(root_node));
 
-  if (at_table_end){
-    this->cell_num = num_cells;
-    this->end_of_table = true;  
-  }
-  else {
-    this->cell_num = 0;
-    this->end_of_table = (num_cells == 0);
-  }
+  this->end_of_table = (num_cells == 0);
+}
+
+// Creates a cursor object at the root node with a given key
+Cursor::Cursor(Table* table, uint32_t key) {  
+  this->table = table;
+  this->page_num = table->pager->root_page_num;
+  this->cell_num = table->find_key(key)->cell_num;
+
+  void* root_node = table->pager->get_page(this->page_num);
+  uint32_t num_cells = *(table->pager->btree->leaf_num_cells(root_node));
+
+  this->end_of_table = (num_cells == this->cell_num);  
 }
 
 void* Cursor::get_value() {

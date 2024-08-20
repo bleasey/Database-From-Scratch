@@ -7,11 +7,23 @@
 ExecuteResult DB::execute_insert() {
   void* node = table->pager->get_page(table->pager->root_page_num);
   BTree* btree = table->pager->btree;
-  if (*(btree->leaf_num_cells(node)) >= btree->LEAF_NODE_MAX_CELLS) {
+
+  uint32_t num_cells = *(btree->leaf_num_cells(node));
+  if (num_cells >= btree->LEAF_NODE_MAX_CELLS) {
     return EXECUTE_TABLE_FULL;
   }
 
-  Cursor* cursor = new Cursor(table, true); // cursor initialized at table end
+  Cursor* cursor = new Cursor(table, table->row_to_insert->id); // cursor initialized with given key
+  
+  // Checking if duplicate key exists
+  if (cursor->cell_num < num_cells) {
+    uint32_t key_at_index = *(btree->leaf_key(node, cursor->cell_num));
+    if (table->row_to_insert->id == key_at_index) {
+      delete cursor;
+      return EXECUTE_DUPLICATE_KEY;
+    }
+  }
+
   btree->leaf_node_insert(cursor, table->row_to_insert->id, table->row_to_insert);
 
   delete cursor;
@@ -19,7 +31,7 @@ ExecuteResult DB::execute_insert() {
 }
 
 ExecuteResult DB::execute_select() {
-  Cursor* cursor = new Cursor(table, 0);
+  Cursor* cursor = new Cursor(table);
   Row row;
 
   while (!(cursor->end_of_table)){
